@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genkai — High-Performance Systems Telemetry</title>
+  <meta name="description" content="Sub-millisecond process telemetry, memory ceiling tracking, and multi-threaded HTTP load testing.">
+  
+  <!-- Modern Fonts with Noto Sans JP for Japanese Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Minimal Navbar -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand" id="navBrand">
+        <img src="assets/logo.png" alt="Genkai" class="brand-logo" onerror="this.style.display='none'; document.getElementById('brandLogoFallback').style.display='inline-flex';">
+        <span class="brand-logo-fallback" id="brandLogoFallback" style="display:none;">限界</span>
+        <div class="brand-text-lockup">
+          <span class="brand-name">Genkai</span>
+          <span class="brand-sub">限界 • C++17</span>
+        </div>
+      </a>
+
+      <nav class="nav-menu" id="navMenu">
+        <a href="#platform" class="nav-link">PLATFORM</a>
+        <a href="#regression" class="nav-link">COMPARE</a>
+        <a href="#load-engine" class="nav-link">LOAD</a>
+        <a href="#cli-sandbox" class="nav-link">CLI</a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="copy-pill" id="quickCopyPill" title="Click to copy command">
+          <span class="terminal-prompt">$</span>
+          <span class="command-text">genkai bench -- ./app</span>
+          <button class="copy-btn" id="quickCopyBtn" aria-label="Copy Command">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+        <a href="#cli-sandbox" class="btn-primary" id="getStartedBtn">
+          <span>GET STARTED</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO SECTION (Light, Architectural Wireframe Grid + Japanese Watermark) -->
+    <section class="hero-section" id="hero">
+      <!-- Background Architectural Wireframe Bars -->
+      <div class="hero-wireframe-bg" aria-hidden="true">
+        <div class="wireframe-bar bar-1"></div>
+        <div class="wireframe-bar bar-2"></div>
+        <div class="wireframe-bar bar-3"></div>
+        <div class="wireframe-bar bar-4"></div>
+        <div class="wireframe-bar bar-5"></div>
+        <div class="wireframe-bar bar-6"></div>
+        <div class="wireframe-grid-lines"></div>
+      </div>
+
+      <!-- Balanced Japanese Background Watermark -->
+      <div class="hero-kanji-watermark" aria-hidden="true">限界</div>
+
+      <div class="hero-container">
+        <div class="hero-headline-wrap anim-entry-1">
+          <div class="kanji-micro-tag">
+            <span class="k-accent">限界</span>
+            <span class="k-sep">/</span>
+            <span>SYSTEMS TELEMETRY</span>
+          </div>
+          <h1 class="hero-title" id="heroTitle">
+            Push your software<br>
+            to its limits.
+          </h1>
+        </div>
+
+        <div class="hero-bottom-grid anim-entry-2">
+          <div class="hero-cta-group">
+            <a href="#cli-sandbox" class="btn-dark-pill" id="heroCtaBtn">
+              <span>RUN BENCHMARK</span>
+              <span class="dot-red pulse-dot"></span>
+            </a>
+            <p class="hero-subtext">
+              Benchmark. Break. Optimize.
+            </p>
+          </div>
+
+          <div class="hero-specs-pill anim-entry-3">
+            <div class="spec-stat">
+              <span class="stat-number count-up" data-target="0.00" data-decimals="2">0.00<span class="stat-unit">ms</span></span>
+              <span class="stat-label">OVERHEAD</span>
+            </div>
+            <div class="spec-divider"></div>
+            <div class="spec-stat">
+              <span class="stat-number">wait4<span class="stat-unit">()</span></span>
+              <span class="stat-label">POSIX</span>
+            </div>
+            <div class="spec-divider"></div>
+            <div class="spec-stat">
+              <span class="stat-number count-up" data-target="100" data-decimals="0">100<span class="stat-unit">%</span></span>
+              <span class="stat-label">DETERMINISTIC</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MIDDLE PLATFORM SECTION (Deep Matte Obsidian) -->
+    <section class="platform-section" id="platform">
+      <div class="platform-topbar">
+        <div class="platform-container topbar-flex">
+          <div class="platform-label-pill">
+            <img src="assets/logo.png" alt="Genkai Logo" class="platform-logo-icon" onerror="this.style.display='none';">
+            <span class="platform-pill-text">Genkai - <span class="kanji-dim">限界</span></span>
+          </div>
+          <div class="platform-status-right">
+            <span class="status-kanji-badge">決定論的</span>
+            <span class="status-pct">100%</span>
+            <span class="status-indicator-tag">[ + ]</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform-container platform-body">
+        <div class="platform-headline-row reveal-on-scroll">
+          <div class="platform-sidebar-caption">
+            <span class="caption-kanji">限界測定</span>
+            <span class="caption-text">Core telemetry runtime.</span>
+          </div>
+          <div class="platform-main-heading">
+            <h2 class="platform-title">
+              How we optimize<br>
+              <span class="title-dimmed">your software.</span>
+            </h2>
+          </div>
+        </div>
+
+        <!-- 3 Wireframe Cards with Staggered Scroll Reveal -->
+        <div class="telemetry-cards-grid">
+          
+          <!-- Card 01 -->
+          <article class="telemetry-card spotlight-card reveal-on-scroll delay-100" id="cardProcess">
+            <div class="card-visual">
+              <svg viewBox="0 0 320 110" class="wireframe-svg" preserveAspectRatio="none">
+                <line x1="20" y1="25" x2="300" y2="25" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                <line x1="20" y1="50" x2="300" y2="50" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                <line x1="20" y1="75" x2="300" y2="75" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+                
+                <rect class="anim-run-bar bar-r1" x="20" y="20" width="220" height="9" rx="1" fill="rgba(255,255,255,0.15)"/>
+                <rect class="anim-run-bar bar-r2" x="20" y="45" width="180" height="9" rx="1" fill="rgba(255,255,255,0.22)"/>
+                <rect class="anim-run-bar bar-r3" x="20" y="70" width="250" height="9" rx="1" fill="rgba(255,59,48,0.7)"/>
+
+                <line class="anim-median-laser" x1="195" y1="10" x2="195" y2="95" stroke="#FF3B30" stroke-width="1.5" stroke-dasharray="3 3"/>
+                <circle class="anim-median-node" cx="195" cy="49" r="3.5" fill="#FF3B30"/>
+              </svg>
+              <div class="visual-tag"><span class="tag-kanji">時間</span> 1.61 ms</div>
+            </div>
+
+            <div class="card-content">
+              <h3 class="card-title">Microsecond Telemetry</h3>
+              <p class="card-description">
+                Direct kernel-level <code>wait4()</code> execution sampling.
+              </p>
+            </div>
+
+            <div class="card-footer">
+              <span class="card-tech">PROCESS PROFILER <span class="k-dim">実行速度</span></span>
+              <span class="card-step">&rarr;</span>
+            </div>
+          </article>
+
+          <!-- Card 02 -->
+          <article class="telemetry-card spotlight-card reveal-on-scroll delay-200" id="cardMemory">
+            <div class="card-visual">
+              <svg viewBox="0 0 320 110" class="wireframe-svg" preserveAspectRatio="none">
+                <line x1="20" y1="95" x2="300" y2="95" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                
+                <rect class="anim-eq-col col-1" x="35" y="55" width="36" height="40" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.2"/>
+                <rect class="anim-eq-col col-2" x="85" y="38" width="36" height="57" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>
+                <rect class="anim-eq-col col-3" x="135" y="28" width="36" height="67" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+                <rect class="anim-eq-col col-4" x="185" y="16" width="36" height="79" fill="rgba(255,59,48,0.18)" stroke="#FF3B30" stroke-width="1.5"/>
+                <rect class="anim-eq-col col-5" x="235" y="46" width="36" height="49" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+
+                <line class="anim-threshold-line" x1="20" y1="16" x2="300" y2="16" stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-dasharray="4 2"/>
+              </svg>
+              <div class="visual-tag"><span class="tag-kanji">上限</span> 2.41 MB</div>
+            </div>
+
+            <div class="card-content">
+              <h3 class="card-title">Peak RAM Ceilings</h3>
+              <p class="card-description">
+                <code>ru_maxrss</code> tracking down to the kilobyte.
+              </p>
+            </div>
+
+            <div class="card-footer">
+              <span class="card-tech">MEMORY ANALYZER <span class="k-dim">上限検知</span></span>
+              <span class="card-step">&rarr;</span>
+            </div>
+          </article>
+
+          <!-- Card 03 -->
+          <article class="telemetry-card spotlight-card reveal-on-scroll delay-300" id="cardNetwork">
+            <div class="card-visual">
+              <svg viewBox="0 0 320 110" class="wireframe-svg" preserveAspectRatio="none">
+                <line x1="20" y1="30" x2="300" y2="30" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <line x1="20" y1="60" x2="300" y2="60" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+                <path class="anim-waveform-lead" d="M 25 80 L 60 65 L 95 72 L 130 40 L 165 55 L 200 30 L 235 45 L 270 20 L 295 35" 
+                      fill="none" stroke="#FF3B30" stroke-width="2"/>
+                
+                <path class="anim-waveform-base" d="M 25 90 L 60 82 L 95 85 L 130 70 L 165 75 L 200 62 L 235 68 L 270 58 L 295 64" 
+                      fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" stroke-dasharray="2 2"/>
+
+                <circle class="anim-ping-node-1" cx="200" cy="30" r="3.5" fill="#FF3B30"/>
+                <circle class="anim-ping-node-2" cx="270" cy="20" r="3.5" fill="#FFFFFF"/>
+              </svg>
+              <div class="visual-tag"><span class="tag-kanji">遅延</span> P95: 34ms</div>
+            </div>
+
+            <div class="card-content">
+              <h3 class="card-title">Concurrent Load</h3>
+              <p class="card-description">
+                Multi-threaded <code>libcurl</code> saturation testing.
+              </p>
+            </div>
+
+            <div class="card-footer">
+              <span class="card-tech">NETWORK ENGINE <span class="k-dim">負荷分散</span></span>
+              <span class="card-step">&rarr;</span>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: REGRESSION RADAR (Light Minimalist Layout) -->
+    <section class="deep-dive-section" id="regression">
+      <div class="section-container">
+        
+        <div class="section-headline-wrap reveal-on-scroll">
+          <div class="section-eyebrow">
+            <span class="k-accent">回帰検知</span>
+            <span class="k-sep">/</span>
+            <span>REGRESSION</span>
+          </div>
+          <h2 class="section-title">
+            Detect regressions.
+          </h2>
+        </div>
+
+        <!-- Interactive Regression Comparator Tool -->
+        <div class="interactive-comparator-card spotlight-card reveal-on-scroll delay-100" id="regressionDemo">
+          <div class="comparator-toolbar">
+            <div class="scenario-selector">
+              <button class="scenario-btn active" data-scenario="bad">Alert (+24.1%)</button>
+              <button class="scenario-btn" data-scenario="good">Gain (-18.2%)</button>
+              <button class="scenario-btn" data-scenario="leak">RAM Bloat (+38.6%)</button>
+            </div>
+            
+            <div class="threshold-slider-wrap">
+              <label for="thresholdRange">THRESHOLD: <span id="thresholdValue">10.0</span>%</label>
+              <input type="range" id="thresholdRange" min="1" max="30" value="10" step="0.5">
+            </div>
+          </div>
+
+          <div class="comparator-grid">
+            <!-- Metric 1 -->
+            <div class="metric-box">
+              <div class="metric-header">
+                <span class="metric-name">RUNTIME</span>
+                <span class="metric-delta delta-regression" id="runtimeDelta">+24.1%</span>
+              </div>
+              <div class="metric-values">
+                <div class="val-column">
+                  <span class="val-label">BEFORE</span>
+                  <span class="val-number" id="runtimeBefore">128.40 <small>ms</small></span>
+                </div>
+                <div class="val-arrow">&rarr;</div>
+                <div class="val-column">
+                  <span class="val-label">AFTER</span>
+                  <span class="val-number" id="runtimeAfter">159.34 <small>ms</small></span>
+                </div>
+              </div>
+              <div class="metric-bar-track">
+                <div class="metric-bar-fill bar-regression" id="runtimeBar" style="width: 78%;"></div>
+              </div>
+            </div>
+
+            <!-- Metric 2 -->
+            <div class="metric-box">
+              <div class="metric-header">
+                <span class="metric-name">AVERAGE RAM</span>
+                <span class="metric-delta delta-neutral" id="avgRamDelta">+4.2%</span>
+              </div>
+              <div class="metric-values">
+                <div class="val-column">
+                  <span class="val-label">BEFORE</span>
+                  <span class="val-number" id="avgRamBefore">4.12 <small>MB</small></span>
+                </div>
+                <div class="val-arrow">&rarr;</div>
+                <div class="val-column">
+                  <span class="val-label">AFTER</span>
+                  <span class="val-number" id="avgRamAfter">4.29 <small>MB</small></span>
+                </div>
+              </div>
+              <div class="metric-bar-track">
+                <div class="metric-bar-fill bar-neutral" id="avgRamBar" style="width: 48%;"></div>
+              </div>
+            </div>
+
+            <!-- Metric 3 -->
+            <div class="metric-box">
+              <div class="metric-header">
+                <span class="metric-name">PEAK RAM</span>
+                <span class="metric-delta delta-regression" id="peakRamDelta">+15.8%</span>
+              </div>
+              <div class="metric-values">
+                <div class="val-column">
+                  <span class="val-label">BEFORE</span>
+                  <span class="val-number" id="peakRamBefore">6.20 <small>MB</small></span>
+                </div>
+                <div class="val-arrow">&rarr;</div>
+                <div class="val-column">
+                  <span class="val-label">AFTER</span>
+                  <span class="val-number" id="peakRamAfter">7.18 <small>MB</small></span>
+                </div>
+              </div>
+              <div class="metric-bar-track">
+                <div class="metric-bar-fill bar-regression" id="peakRamBar" style="width: 72%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Status Banner -->
+          <div class="regression-status-banner banner-warning" id="regressionBanner">
+            <div class="banner-text" id="regressionBannerText">
+              <strong>[WARNING] Runtime regression detected!</strong> Runtime increased by 24.1%, exceeding 10.0% threshold.
+            </div>
+            <div class="banner-cli-preview">
+              <code>genkai compare old.json new.json --threshold 10.0</code>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: HTTP LOAD ENGINE (Dark Minimalist) -->
+    <section class="load-engine-section" id="load-engine">
+      <div class="section-container">
+        
+        <div class="section-headline-wrap reveal-on-scroll">
+          <div class="section-eyebrow dark">
+            <span class="k-accent">極限測定</span>
+            <span class="k-sep">/</span>
+            <span>LATENCY</span>
+          </div>
+          <h2 class="dark-section-title">
+            Measure tail latency.
+          </h2>
+        </div>
+
+        <!-- Interactive Load Simulator -->
+        <div class="load-simulator-card spotlight-card reveal-on-scroll delay-100">
+          <div class="simulator-controls">
+            <div class="sim-input-group">
+              <label for="simUrl">ENDPOINT</label>
+              <div class="input-with-protocol">
+                <span class="protocol">https://</span>
+                <input type="text" id="simUrl" value="httpbin.org/get" spellcheck="false">
+              </div>
+            </div>
+
+            <div class="sim-slider-group">
+              <div class="slider-header">
+                <label for="simRequests">REQUESTS</label>
+                <span class="slider-display" id="simRequestsVal">200</span>
+              </div>
+              <input type="range" id="simRequests" min="20" max="1000" step="20" value="200">
+            </div>
+
+            <div class="sim-slider-group">
+              <div class="slider-header">
+                <label for="simConcurrency">CONCURRENCY</label>
+                <span class="slider-display" id="simConcurrencyVal">10</span>
+              </div>
+              <input type="range" id="simConcurrency" min="1" max="50" step="1" value="10">
+            </div>
+
+            <div class="sim-action">
+              <button class="btn-run-sim" id="btnRunLoadTest">
+                <span class="sim-spinner" id="simSpinner" style="display:none;"></span>
+                <span id="simBtnText">EXECUTE LOAD TEST</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sim-results-dashboard">
+            <div class="dash-metrics-row">
+              <div class="dash-metric">
+                <span class="d-label">THROUGHPUT</span>
+                <span class="d-val" id="resThroughput">52.4 <small>RPS</small></span>
+              </div>
+              <div class="dash-metric">
+                <span class="d-label">AVG LATENCY</span>
+                <span class="d-val" id="resAvgLatency">18.6 <small>ms</small></span>
+              </div>
+              <div class="dash-metric highlight-metric">
+                <span class="d-label">P95 TAIL</span>
+                <span class="d-val" id="resP95">34.2 <small>ms</small></span>
+              </div>
+              <div class="dash-metric">
+                <span class="d-label">SUCCESS</span>
+                <span class="d-val" id="resSuccessRate">100%</span>
+              </div>
+            </div>
+
+            <!-- Latency Spectrum Bar Stream -->
+            <div class="dash-chart-container">
+              <div class="histogram-bars-stream" id="histogramStream"></div>
+            </div>
+
+            <div class="dash-footer">
+              <span class="dash-file-saved"><code id="dashFilename">loadtest_20261020_132435.json</code></span>
+              <button class="btn-copy-json" id="btnCopyJson">Copy JSON</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: TERMINAL SANDBOX -->
+    <section class="cli-sandbox-section" id="cli-sandbox">
+      <div class="section-container">
+        
+        <div class="section-headline-wrap reveal-on-scroll">
+          <div class="section-eyebrow">
+            <span class="k-accent">端末操作</span>
+            <span class="k-sep">/</span>
+            <span>CLI</span>
+          </div>
+          <h2 class="section-title">
+            Terminal interface.
+          </h2>
+        </div>
+
+        <div class="terminal-shell-card spotlight-card reveal-on-scroll delay-100">
+          <div class="terminal-window-header">
+            <div class="window-left-group">
+              <div class="window-buttons">
+                <span class="btn-win btn-close"></span>
+                <span class="btn-win btn-min"></span>
+                <span class="btn-win btn-max"></span>
+              </div>
+              <div class="terminal-brand-pill">
+                <img src="assets/logo.png" alt="Genkai" class="term-logo-icon" onerror="this.style.display='none';">
+                <span>Genkai -</span>
+              </div>
+            </div>
+            <div class="terminal-tabs">
+              <button class="term-tab active" data-cmd="bench">bench</button>
+              <button class="term-tab" data-cmd="compare">compare</button>
+              <button class="term-tab" data-cmd="load">load</button>
+              <button class="term-tab" data-cmd="show">show</button>
+              <button class="term-tab" data-cmd="history">history</button>
+            </div>
+            <div class="terminal-header-action">
+              <button class="btn-copy-term" id="btnCopyTermCommand">Copy</button>
+            </div>
+          </div>
+
+          <div class="terminal-screen" id="terminalScreen">
+            <div class="terminal-line input-line">
+              <span class="t-prompt">$</span>
+              <span class="t-command" id="activeTermCommand">genkai bench --runs 5 -- ./dist/api_server</span>
+              <span class="term-cursor-blink">▋</span>
+            </div>
+            
+            <div class="terminal-body-output" id="terminalOutput">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- MANIFESTO & KAIROS SECTION -->
+    <section class="cli-manifesto-section" id="manifesto">
+      <div class="section-container manifesto-wrap">
+        <div class="manifesto-card reveal-on-scroll">
+          <div class="manifesto-eyebrow">
+            <span class="k-accent">原点回帰</span>
+            <span class="k-sep">/</span>
+            <span>CLI FIRST</span>
+          </div>
+
+          <h2 class="manifesto-title">
+            Getting developers back to CLI.
+          </h2>
+
+          <div class="kairos-highlight-box spotlight-card">
+            <div class="kairos-info">
+              <span class="kairos-badge">KAIROS • 時機</span>
+              <p class="kairos-desc">
+                Checkout Kairos — modern command-line intelligence.
+              </p>
+            </div>
+            <a href="https://kairoscmd.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-kairos" id="kairosLink">
+              <span>checkout Kairos &rarr;</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Minimal Footer with Japanese touch -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-bottom">
+        <div class="footer-meta">
+          <img src="assets/logo.png" alt="Genkai Logo" class="footer-logo-img" onerror="this.style.display='none';">
+          <span class="brand-name">Genkai</span>
+          <span class="k-dim">限界 • C++17</span>
+          <span class="footer-sep">•</span>
+          <span>Getting developers back to CLI</span>
+        </div>
+        <div class="footer-kairos-credit">
+          <span>Checkout <a href="https://kairoscmd.vercel.app" target="_blank" rel="noopener noreferrer" class="footer-inline-link">Kairos</a> &bull; kairoscmd.vercel.app</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
