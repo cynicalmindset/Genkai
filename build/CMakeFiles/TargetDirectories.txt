@@ -1,0 +1,3 @@
+/home/potato/Desktop/genkai/build/CMakeFiles/genkai.dir
+/home/potato/Desktop/genkai/build/CMakeFiles/edit_cache.dir
+/home/potato/Desktop/genkai/build/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/genkai.dir/src/main.cpp.o CMakeFiles/genkai.dir/src/statistics.cpp.o CMakeFiles/genkai.dir/src/process.cpp.o CMakeFiles/genkai.dir/src/compare.cpp.o CMakeFiles/genkai.dir/src/load.cpp.o -o genkai  /usr/lib/x86_64-linux-gnu/libcurl.so 

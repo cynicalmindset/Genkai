@@ -1,0 +1,12 @@
+{
+  "url": "https://httpbin.org/get",
+  "requests": 20,
+  "concurrency": 5,
+  "duration_seconds": 3.97,
+  "throughput_rps": 5.03,
+  "average_latency_ms": 953.00,
+  "p95_latency_ms": 992.87,
+  "successful_requests": 20,
+  "http_errors": 0,
+  "failed_requests": 0
+}

@@ -1,0 +1,10 @@
+{
+  "runs": 3,
+  "average": 1.27,
+  "median": 1.00,
+  "min": 1.00,
+  "max": 1.60,
+  "average_ram_mb": 2.33,
+  "peak_ram_mb": 2.40,
+  "times_ms": [1.60, 1.00, 1.20]
+}
