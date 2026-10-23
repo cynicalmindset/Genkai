@@ -104,18 +104,16 @@ int main(int argc, char* argv[]){
     }
 
     if (action == "load") {
-        if (argc != 7 ||
-            string(argv[3]) != "--requests" ||
-            string(argv[5]) != "--concurrency") {
-            cerr << "Usage: genkai load <URL> --requests N --concurrency N\n";
+        if (argc != 3){
+            cerr << "usage genkai load url\n";
             return 1;
         }
 
         try {
-            int requests = stoi(argv[4]);
-            int concurrency = stoi(argv[6]);
+            // int requests = stoi(argv[4]);
+            // int concurrency = stoi(argv[6]);
 
-            runLoadTest(argv[2], requests, concurrency);
+            runLoadTest(argv[2]);
         } catch (...) {
             cerr << "Invalid request or concurrency count.\n";
             return 1;
