@@ -2,6 +2,6 @@
 
 #include <string>
 
-void runLoadTest(
+void Load(
     const std::string& url
 );

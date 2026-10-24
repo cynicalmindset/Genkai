@@ -1,170 +1,191 @@
+// load testing , here i am sending a lot of requests to the API and monitoring the error rates
+
+// some terms for understanding here
+// concurrency = how many workers are sending requests
+// throughput = how many requests are being successfull 
+
+// we are here increasing concurrnecy until it breaks 
+
+
 #include "load.hpp"
 
-#include <algorithm>
-#include <chrono>
+#include<bits/stdc++.h>
+#include<chrono>
 #include <curl/curl.h>
-#include <iostream>
-#include <mutex>
-#include <string>
-#include <thread>
-#include <vector>
 
 using namespace std;
 
-struct RequestResult {
+// its basically the node of per requests containng latency, satus ,failed report
+struct reqres {
     double latency;
     long status;
     bool failed;
 };
 
-size_t discardResponse(
-    void* data, size_t size, size_t count, void* userdata
-) {
-    return size * count;
-}
+//response will contain a lot of info but we only need size and count so discarding wverything else here
+size_t discardres (void* data, size_t size, size_t count, void* userdata){
+    return size*count;
+};
 
-void runLoadTest(const string& url) {
-    vector<int> concurrencyLevels = {1, 2, 4, 8, 16};
+
+void Load(const string& url){
+    //concurrency level { will make it inscresae by sqr until error rate is  over thershold}
+    // vector<int> level;
+    const int maxConcurrency = 224;
+
     const int durationSeconds = 5;
-    double p95Latency = 0.0;
+    const double maxErrorRate = 1.0;
+    const double maxP95LatencyMs = 1000.0; // P95 helps you understand the experience of slower requests without letting one extremely slow request dominate the measurement.
 
-    vector<thread> workers;
-    vector<RequestResult> results;
-    mutex resultsMutex;
+    cout << "testing: "<<url<<'\n';
+    cout << "duration of per stage: "<<durationSeconds<<' sec\n';
 
-    cout << "Testing: " << url << '\n';
-    // cout << "Concurrency: " << concurrencyLevels << '\n';
-    cout << "Duration: " << durationSeconds << " seconds\n";
-
-    if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
-        cerr << "Failed to initialize libcurl\n";
+    //checking curl is working or not
+    if(curl_global_init(CURL_GLOBAL_DEFAULT)!=CURLE_OK){
+        cerr << "failed to init curl";
         return;
     }
 
-    auto deadline = chrono::steady_clock::now()
-                  + chrono::seconds(durationSeconds);
+    int highestPassingConcurrency = 0; // recording the highest number of worker that scored passed
+    double bestThroughput = 0.0;
+    double bestP95 = 0.0;
+    double bestErrorRate = 0.0;
 
-    auto testStart = chrono::steady_clock::now();
+    for(int conc = 2; conc <= maxConcurrency; conc += 2){ // itrating conc levels
+        cout << "\ntesiting with " << conc <<" workers\n";
 
-    for (int concurrency:concurrencyLevels) {
-        workers.emplace_back([&]() {
-            while (chrono::steady_clock::now() < deadline) {
-                CURL* curl = curl_easy_init();
+        vector<thread> workers;
+        vector<reqres> results;
+        mutex resMutex; // its like a key allowing the result vector to be modified individually 
 
-                if (!curl) {
-                    cerr << "Failed to create CURL handle\n";
-                    break;
+        auto testS = chrono::steady_clock::now();
+        auto deadline = testS + chrono::seconds(durationSeconds); // each level will have a deadline
+
+        for(int i = 0;i<conc;i++){
+            workers.emplace_back([&]() {
+                while(chrono::steady_clock::now() < deadline){
+
+                    CURL* curl = curl_easy_init();
+
+                    if(!curl){
+                        cerr << "failed to create curl reques\n";
+                        break;
+                    }
+
+                    //sseding http requests to API
+                    curl_easy_setopt(curl, CURLOPT_URL, url.c_str()); // telling the erquests where to go
+                    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discardres); // telling curl now what the response should look like
+                    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L); // stoping the requests if it take more than 2 sec
+                    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L); // preventing signal related problems here
+
+                    auto s = chrono::steady_clock::now();
+                    CURLcode res = curl_easy_perform(curl);
+                    auto e= chrono::steady_clock::now();
+
+                    //getting latency of per request here
+                    double latency = chrono::duration<double,milli>(e-s).count();
+
+                    //getting status of per req
+                    long status = 0;
+                    curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&status);
+                    bool failed = res != CURLE_OK || status < 200 || status >= 400;
+
+                    //stroing the res in node
+                    reqres request{
+                        latency,
+                        status,
+                        failed
+                    };
+
+                    {
+                        lock_guard<mutex> lock(resMutex);
+                        results.push_back(request);  
+                    }
+
+                    curl_easy_cleanup(curl);
+
                 }
+            });
+        }
 
-                curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-                curl_easy_setopt(
-                    curl, CURLOPT_WRITEFUNCTION, discardResponse
-                );
-                curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L);
-                curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
-                auto start = chrono::steady_clock::now();
-                CURLcode result = curl_easy_perform(curl);
-                auto end = chrono::steady_clock::now();
+        for(auto& worker: workers){
+            worker.join();
+        }
 
-                double latency =
-                    chrono::duration<double, milli>(end - start).count();
 
-                long status = 0;
-                curl_easy_getinfo(
-                    curl, CURLINFO_RESPONSE_CODE, &status
-                );
+        auto testend = chrono::steady_clock::now();
+        double actualduration = chrono::duration<double>(testend-testS).count();
 
-                bool failed = result != CURLE_OK || status >= 400;
+        vector<double> latencies;
+        int failedreq = 0;
 
-                if (result != CURLE_OK) {
-                    cerr << "Network error: "
-                        << curl_easy_strerror(result) << '\n';
-                } else if (status >= 400) {
-                    cerr << "HTTP error: " << status << '\n';
-                }
-
-                RequestResult request{
-                    latency,
-                    status,
-                    failed
-                };
-
-                {
-                    lock_guard<mutex> lock(resultsMutex);
-                    results.push_back(request);
-                }
-
-                curl_easy_cleanup(curl);
+        //pushing latency to array for P95 calc and also counting total failed req here
+        for(const auto& request: results){
+            latencies.push_back(request.latency);
+            if(request.failed){
+                failedreq++;
             }
-        });
+        }
+
+        int totalRequests = static_cast<int>(results.size());
+        int successfulRequests = totalRequests - failedreq;
+
+        double successfulRps = actualduration > 0
+            ? successfulRequests / actualduration
+            : 0.0;
+        double errorRate = totalRequests > 0 ? 100.0 * failedreq/totalRequests : 0.0;
+
+        double P95 = 0.0;
+
+        if(!latencies.empty()){
+            sort(latencies.begin(), latencies.end());
+            size_t index = static_cast<size_t>(0.95 * (latencies.size()-1));
+            P95 = latencies[index];
+        }
+
+        bool stageFailed = errorRate > maxErrorRate || latencies.empty() || P95 > maxP95LatencyMs;
+
+        cout << "Actual duration: "<< actualduration << " seconds\n";
+        cout << "Total requests: " << totalRequests << '\n';
+        cout << "Successful requests: " << successfulRequests << '\n';
+        cout << "Failed requests: " << failedreq << '\n';
+        cout << "Successful throughput: "<< successfulRps << " req/s\n";
+        cout << "Error rate: " << errorRate << "%\n";
+        cout << "P95 latency: " << P95 << " ms\n";
+
+        if (stageFailed) {
+            cout << "Stage result: FAILED\n";
+            cout << "Stopping the load test.\n";
+            break;
+        }
+
+        highestPassingConcurrency = conc;
+        bestThroughput = successfulRps;
+        bestP95 = P95;
+        bestErrorRate = errorRate;
+        cout << "Stage result: PASSED\n";
+
     }
 
-    for (auto& worker : workers) {
-        worker.join();
-    }
 
-    auto testEnd = chrono::steady_clock::now();
 
-    double actualDuration = chrono::duration<double>(
-        testEnd - testStart
-    ).count();
+    const double secondsPerUserRequest = 5.0;
 
-    cout << "Actual duration: "
-        << actualDuration << " seconds\n";
+    double estimatedUsers = bestThroughput * secondsPerUserRequest;
+
+    cout << "\n--- CAPACITY REPORT ---\n";
+    cout << "Highest passing concurrency: "<< highestPassingConcurrency << " workers\n";
+    cout << "Sustainable throughput: "<< bestThroughput << " requests/sec\n";
+    cout << "P95 latency: " << bestP95 << " ms\n";
+    cout << "Error rate: " << bestErrorRate << "%\n";
+    cout << "Estimated active users: "<< static_cast<int>(estimatedUsers) << '\n';
+    cout << "Assumption: 1 request every "<< secondsPerUserRequest << " seconds per user\n\n";
+
+    cout << "\bThis is a rough estimate, not a guaranteed user limit. It assumes evenly spaced requests and doesn't model login bursts, database bottlenecks, or users making multiple API calls.\n";
 
     curl_global_cleanup();
 
-    vector<double> latencies;
-    int failedRequests = 0;
-
-    for (const auto& request : results) {
-        latencies.push_back(request.latency);
-
-        if (request.failed) {
-            failedRequests++;
-        }
-    }
-
-    int successfulRequests = static_cast<int>(results.size()) - failedRequests;
-
-    double successfulRps = actualDuration > 0
-    ? successfulRequests / actualDuration
-    : 0.0;
-
-    cout << "Successful requests: " << successfulRequests << '\n';
-    cout << "Successful throughput: " << successfulRps << " req/s\n";
-
-    if (!latencies.empty()) {
-        sort(latencies.begin(), latencies.end());
-
-        size_t index = static_cast<size_t>(
-            0.95 * (latencies.size() - 1)
-        );
-
-        p95Latency = latencies[index];
-
-        cout << "\nP95 latency: "
-             << latencies[index] << " ms\n";
-    } else {
-        cout << "\nNo requests completed.\n";
-    }
-
-    double errorRate = results.empty()
-        ? 0.0
-        : 100.0 * failedRequests / results.size();
-
-    const double maxErrorRate = 1.0;
-    const double maxP95LatencyMs = 1000.0;
-
-    if (errorRate > maxErrorRate ||
-        (p95Latency > maxP95LatencyMs)) {
-        cout << "Stage result: FAILED\n";
-    } else {
-        cout << "Stage result: PASSED\n";
-    }
-
-    cout << "Total requests: " << results.size() << '\n';
-    cout << "Failed requests: " << failedRequests << '\n';
-    cout << "Error rate: " << errorRate << "%\n";
 }
+
+

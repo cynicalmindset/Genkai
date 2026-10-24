@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
             // int requests = stoi(argv[4]);
             // int concurrency = stoi(argv[6]);
 
-            runLoadTest(argv[2]);
+            Load(argv[2]);
         } catch (...) {
             cerr << "Invalid request or concurrency count.\n";
             return 1;
