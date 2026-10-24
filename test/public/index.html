@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaStore — E-Commerce & Systems Load Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>⚡ <strong>Genkai Benchmark Target:</strong> Real-time REST API server with live SSE telemetry streaming.</span>
+    <span class="genkai-badge">Target: port 3000</span>
+  </div>
+
+  <!-- Main Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-logo">N</div>
+        <div>
+          <span class="brand-title">NovaStore</span>
+          <span class="brand-sub">PORT 3000 • LIVE API</span>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="searchInput" placeholder="Search catalog in real-time (hits /api/products/search)...">
+      </div>
+
+      <div class="nav-actions">
+        <div class="user-pill" id="userPill" onclick="openAuthModal()">
+          <span id="userStatusText">Sign In</span>
+        </div>
+        <button class="cart-btn" onclick="toggleCart()">
+          🛒 Cart (<span id="cartCount">0</span>)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dual Layout: Storefront + Live Telemetry -->
+  <div class="app-layout">
+    
+    <!-- LEFT: Real E-Commerce Storefront -->
+    <main class="store-section">
+      <div class="store-header">
+        <div>
+          <h1 class="page-title">Products Catalog</h1>
+          <p class="page-desc">Real-time mock dataset with category filtering, search, and session carts.</p>
+        </div>
+        <div class="category-filters" id="categoryFilters">
+          <button class="cat-chip active" data-cat="">All</button>
+          <button class="cat-chip" data-cat="Audio">Audio</button>
+          <button class="cat-chip" data-cat="Peripherals">Peripherals</button>
+          <button class="cat-chip" data-cat="Displays">Displays</button>
+          <button class="cat-chip" data-cat="Wearables">Wearables</button>
+          <button class="cat-chip" data-cat="Accessories">Accessories</button>
+        </div>
+      </div>
+
+      <div class="products-grid" id="productsGrid">
+        <div class="loading-state">Loading products from /api/products...</div>
+      </div>
+    </main>
+
+    <!-- RIGHT: Live Systems Monitor & Genkai Runner -->
+    <aside class="monitor-section">
+      <div class="monitor-header">
+        <div class="monitor-title">
+          <span class="pulsing-dot"></span>
+          <span>Live Server Telemetry</span>
+        </div>
+        <span class="stream-badge" id="streamStatus">STREAM ACTIVE</span>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">TOTAL REQUESTS</div>
+          <div class="metric-val" id="totalReqCount">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">SUCCESS (2xx)</div>
+          <div class="metric-val text-green" id="successReqCount">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">FAILED (4xx/5xx)</div>
+          <div class="metric-val text-red" id="failedReqCount">0</div>
+        </div>
+      </div>
+
+      <!-- Genkai Command Helper -->
+      <div class="genkai-helper-box">
+        <div class="helper-title">⚡ Test With Genkai CLI</div>
+        <p class="helper-sub">Run this command in your project terminal to watch the load tester hit this live server:</p>
+        <div class="code-pill">
+          <code>./build/genkai load http://localhost:3000/api/products</code>
+          <button onclick="copyGenkaiCmd(this)">Copy</button>
+        </div>
+        <div class="sim-actions">
+          <button class="btn-sm" onclick="simulateBurst(25)">🔥 Fire 25 Test Requests</button>
+          <button class="btn-sm" onclick="simulateBurst(100)">⚡ Fire 100 Test Requests</button>
+        </div>
+      </div>
+
+      <!-- Real-time Request Stream -->
+      <div class="stream-container">
+        <div class="stream-label">INCOMING HTTP REQUEST STREAM</div>
+        <div class="request-feed" id="requestFeed">
+          <div class="empty-feed">Listening for incoming traffic on port 3000...</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button class="close-btn" onclick="toggleCart()">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="empty-cart">Your cart is currently empty.</div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total-row">
+        <span>Total:</span>
+        <strong id="cartTotalDisplay">$0.00</strong>
+      </div>
+      <button class="btn-checkout" onclick="checkoutOrder()">Checkout Order (POST /api/orders/checkout)</button>
+    </div>
+  </div>
+
+  <!-- Auth Modal (Login / Register) -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+          <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Create Account</button>
+        </div>
+        <button class="close-btn" onclick="closeAuthModal()">✕</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" value="alex@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" value="password123" required>
+        </div>
+        <button type="submit" class="btn-primary-full">Sign In (POST /api/auth/login)</button>
+        <p class="form-hint">Pre-filled with seeded demo account.</p>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" style="display:none;" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="regName" placeholder="Sarah Connor" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="regEmail" placeholder="sarah@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="Minimum 6 characters" required>
+        </div>
+        <button type="submit" class="btn-primary-full">Create Account (POST /api/auth/register)</button>
+      </form>
+
+      <div id="authMessage" class="auth-msg"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
